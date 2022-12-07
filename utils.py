@@ -8,16 +8,15 @@ from bs4 import BeautifulSoup
 SESSION = os.environ.get('SESSION')
 
 
-def get_input(day: int, year: Optional[int], test: bool = False) -> str:
+def get_input(
+    day: int, year: Optional[int], test: bool = False, test_index: int = 0
+) -> str:
     if test:
         soup = BeautifulSoup(
             requests.get(f'https://adventofcode.com/{year}/day/{day}').text,
             features='html.parser',
         )
-        for pre in soup.find_all('pre'):
-            if code := pre.find('code'):
-                input_text = code.text
-                break
+        input_text = soup.find_all('pre')[test_index].text
     else:
         if year is None:
             year = datetime.now().year
