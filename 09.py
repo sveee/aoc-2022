@@ -17,10 +17,11 @@ def move(position, direction):
 def follow(tail, head):
     diff = head[0] - tail[0], head[1] - tail[1]
     normalize = lambda x: (-1 if x < 0 else 1) * min(abs(x), 1)
-    if abs(diff[0]) <= 1 and abs(diff[1]) <= 1:  # are neighbours
-        direction = (0, 0)
-    else:
-        direction = normalize(diff[0]), normalize(diff[1])
+    direction = (
+        (0, 0)
+        if abs(diff[0]) <= 1 and abs(diff[1]) <= 1  # are neighbours
+        else (normalize(diff[0]), normalize(diff[1]))
+    )
     return move(tail, direction)
 
 
