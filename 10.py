@@ -1,6 +1,6 @@
 from utils import get_input
 
-text = get_input(day=10, year=2022, test=False, test_index=1)
+text = get_input(day=10, year=2022)
 lines = text.splitlines()
 
 
