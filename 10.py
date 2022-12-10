@@ -16,7 +16,7 @@ image = ''
 for crt in range(240):
     if crt % 40 == 0 and image:
         image += '\n'
-    image += '#' if abs(xs[crt] - (crt % 40)) <= 1 else '.'
+    image += '#' if abs(xs[crt] - crt % 40) <= 1 else '.'
 
 print(sum((cycle + 1) * xs[cycle] for cycle in range(19, len(xs), 40)))
 print(image)
