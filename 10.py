@@ -7,12 +7,12 @@ lines = text.splitlines()
 def part1():
     x = 1
     xs = [0]
-    for line in text.splitlines():
+    for instruction in text.splitlines():
         xs.append(x)
-        if line.startswith('addx'):
+        if instruction.startswith('addx'):
             xs.append(x)
-            x += int(line.split()[1])
-    return sum(strength * xs[strength] for strength in range(20, len(xs), 40))
+            x += int(instruction.split()[1])
+    return sum(cycle * xs[cycle] for cycle in range(20, len(xs), 40))
 
 
 def part2():
