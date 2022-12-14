@@ -3,7 +3,6 @@ from copy import deepcopy
 from utils import get_input
 
 text = get_input(day=14, year=2022)
-INF = 10**8
 
 
 def get_line(start, end):
@@ -15,34 +14,29 @@ def get_line(start, end):
 
 
 def fill_cave(position, cave, max_y):
-    lowest_y = min(
-        [y for x, y in cave if x == position[0] and y >= position[1]], default=max_y
-    )
-    if lowest_y == INF:
+    if position[1] == INF:
         return True
-    lowest_position = position[0], lowest_y - 1
-    left = (lowest_position[0] - 1, lowest_position[1] + 1)
-    right = (lowest_position[0] + 1, lowest_position[1] + 1)
+    down = (position[0], position[1] + 1)
+    if down[1] < max_y and down not in cave and fill_cave(down, cave, max_y):
+        return True
+    left = (position[0] - 1, position[1] + 1)
     if left[1] < max_y and left not in cave and fill_cave(left, cave, max_y):
         return True
+    right = (position[0] + 1, position[1] + 1)
     if right[1] < max_y and right not in cave and fill_cave(right, cave, max_y):
         return True
-    cave.add(lowest_position)
-    for y in range(position[1], lowest_position[1]):
-        if fill_cave((position[0], y), cave, max_y):
-            return True
-
+    cave.add(position)
     return False
 
 
 cave = set()
 for line in text.splitlines():
     points = list(map(lambda x: tuple(map(int, x.split(','))), line.split(' -> ')))
-
     for index in range(len(points) - 1):
         cave.update(get_line(points[index], points[index + 1]))
 
-for max_y in [INF, max(y for x, y in cave) + 2]:
+INF = max(y for x, y in cave) + 3
+for max_y in [INF + 1, max(y for x, y in cave) + 2]:
     new_cave = deepcopy(cave)
     fill_cave((500, 0), new_cave, max_y)
     print(len(new_cave) - len(cave))
