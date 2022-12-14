@@ -2,7 +2,11 @@ from copy import deepcopy
 
 from utils import get_input
 
-text = get_input(day=14, year=2022)
+directions = [
+    (0, 1),
+    (-1, 1),
+    (1, 1),
+]
 
 
 def get_line(start, end):
@@ -13,30 +17,35 @@ def get_line(start, end):
     ]
 
 
+def initialize_cave():
+    cave = set()
+    for line in text.splitlines():
+        points = list(map(lambda x: tuple(map(int, x.split(','))), line.split(' -> ')))
+        for index in range(len(points) - 1):
+            cave.update(get_line(points[index], points[index + 1]))
+    return cave
+
+
 def fill_cave(position, cave, max_y):
     if position[1] == INF:
         return True
-    down = (position[0], position[1] + 1)
-    if down[1] < max_y and down not in cave and fill_cave(down, cave, max_y):
-        return True
-    left = (position[0] - 1, position[1] + 1)
-    if left[1] < max_y and left not in cave and fill_cave(left, cave, max_y):
-        return True
-    right = (position[0] + 1, position[1] + 1)
-    if right[1] < max_y and right not in cave and fill_cave(right, cave, max_y):
-        return True
+    for direction in directions:
+        next_position = position[0] + direction[0], position[1] + direction[1]
+        if (
+            next_position[1] < max_y
+            and next_position not in cave
+            and fill_cave(next_position, cave, max_y)
+        ):
+            return True
     cave.add(position)
     return False
 
 
-cave = set()
-for line in text.splitlines():
-    points = list(map(lambda x: tuple(map(int, x.split(','))), line.split(' -> ')))
-    for index in range(len(points) - 1):
-        cave.update(get_line(points[index], points[index + 1]))
-
-INF = max(y for x, y in cave) + 3
-for max_y in [INF + 1, max(y for x, y in cave) + 2]:
+text = get_input(day=14, year=2022)
+cave = initialize_cave()
+max_y = max(y for x, y in cave)
+INF = max_y + 100
+for max_y in [INF + 1, max_y + 2]:
     new_cave = deepcopy(cave)
     fill_cave((500, 0), new_cave, max_y)
     print(len(new_cave) - len(cave))
