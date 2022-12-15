@@ -25,7 +25,7 @@ for monkey_block in text.split('\n\n'):
     false_monkeys.append(int(false_case.split()[-1]))
 
 
-def play_rounds(n_rounds, relief):
+def monkey_business(n_rounds, relief):
     current_worry_levels = deepcopy(worry_levels)
     n_inspected = [0] * len(worry_levels)
     mod = reduce(lambda x, y: x * y, divisors)
@@ -49,5 +49,5 @@ def play_rounds(n_rounds, relief):
     return n_inspected[-2] * n_inspected[-1]
 
 
-print(play_rounds(20, True))
-print(play_rounds(10000, False))
+print(monkey_business(20, True))
+print(monkey_business(10000, False))
