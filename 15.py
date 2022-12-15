@@ -17,16 +17,6 @@ def do_intersect(left, right):
     return not (left[1] + 1 < right[0] or right[1] + 1 < left[0])
 
 
-def get_impossible_ranges(y):
-    return union(
-        [
-            impossible_range
-            for sensor, beacon in sensor_and_beacons
-            if (impossible_range := get_impossible_range(sensor, beacon, y))
-        ]
-    )
-
-
 def union(range_set):
     range_set = sorted(range_set)
     left = range_set[0]
@@ -39,6 +29,16 @@ def union(range_set):
             left = right
     result.append(left)
     return result
+
+
+def get_impossible_ranges(y):
+    return union(
+        [
+            impossible_range
+            for sensor, beacon in sensor_and_beacons
+            if (impossible_range := get_impossible_range(sensor, beacon, y))
+        ]
+    )
 
 
 text = get_input(day=15, year=2022)
@@ -62,5 +62,5 @@ max_y = 4000000
 for y in range(max_y + 1):
     range_set = get_impossible_ranges(y)
     if len(range_set) > 1:
-        print(4000000 * (range_set[0][1] + 1) + y)
+        print(max_y * (range_set[0][1] + 1) + y)
         break
