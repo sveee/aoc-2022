@@ -1,11 +1,12 @@
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import cycle
-from typing import List
+from typing import Dict, List
 
 from utils import get_input
 
-jet_pattern = get_input(day=17, year=2022, test=False, test_index=1)
+jet_pattern = get_input(day=17, year=2022)
 
 
 @dataclass
@@ -68,16 +69,42 @@ class Rock:
         )
 
 
+@dataclass
+class Pattern:
+    base_n_rocks: int
+    base_height: int
+    n_rocks_increment: int
+    height_increment: int
+    delta: List[int]
+
+
+@dataclass
+class Match:
+    n_rocks: int
+    height: int
+
+
 def print_tower(tower, rock):
     from itertools import chain
 
-    grid = [['.'] * 7 for _ in range(rock.height() + 1)]
+    height = max(rock.height(), max([point[1] for point in tower], default=0))
+    grid = [['.'] * 7 for _ in range(height + 1)]
     for point in chain(tower, rock.points):
         grid[point[1]][point[0]] = '#'
 
     for line in grid[::-1]:
         print(''.join(line))
     print()
+
+
+def find_match(height):
+    row = height - 1
+    for prev_row in range(row - 1, -1, -1):
+        match = all(
+            tower_by_row[row - k] == tower_by_row[prev_row - k] for k in range(20)
+        )
+        if match:
+            return prev_row + 1
 
 
 shapes = '''####
@@ -104,9 +131,14 @@ rock_index = 0
 current_rock = deepcopy(rocks[0])
 current_rock.move_to_height(3)
 current_rock.move_to_width(2)
-n_rocks = 0
+current_n_rocks = 0
 tower = set()
-tower_height = 0
+tower_by_row = defaultdict(set)
+height = -1
+
+height_per_n_rocks = {}
+prev_match = None
+pattern = None
 for instruction in cycle(jet_pattern):
 
     if instruction == '<':
@@ -115,15 +147,44 @@ for instruction in cycle(jet_pattern):
         current_rock.move_right(tower)
 
     if not current_rock.move_down(tower):
-        tower_height = max(tower_height, current_rock.height())
+        height = max(height, current_rock.height() + 1)
         tower.update(current_rock.to_tower())
+        for point in current_rock.points:
+            tower_by_row[point[1]].add(point[0])
+
+        current_n_rocks += 1
         rock_index = (rock_index + 1) % len(rocks)
-        n_rocks += 1
-
         current_rock = deepcopy(rocks[rock_index])
-        current_rock.move_to_height(tower_height + 4)
+        current_rock.move_to_height(height + 3)
         current_rock.move_to_width(2)
+        height_per_n_rocks[current_n_rocks] = height
 
-    if n_rocks == 2022:
-        print(tower_height + 1)
+        if not prev_match:
+            if prev_height := find_match(height):
+                prev_match = Match(current_n_rocks, height)
+        elif not pattern:
+            if (prev_height := find_match(height)) and prev_height == prev_match.height:
+                pattern = Pattern(
+                    base_n_rocks=prev_match.n_rocks,
+                    base_height=prev_match.height,
+                    n_rocks_increment=current_n_rocks - prev_match.n_rocks,
+                    height_increment=height - prev_height,
+                    delta=[
+                        height_per_n_rocks[n_rocks] - prev_match.height
+                        for n_rocks in range(prev_match.n_rocks, current_n_rocks + 1)
+                    ],
+                )
+
+    if current_n_rocks == 10000:
         break
+
+
+def get_tower_height(n_rocks):
+    assert n_rocks >= pattern.base_n_rocks and pattern
+    q = (n_rocks - pattern.base_n_rocks) // pattern.n_rocks_increment
+    r = (n_rocks - pattern.base_n_rocks) % pattern.n_rocks_increment
+    return pattern.base_height + pattern.height_increment * q + pattern.delta[r]
+
+
+print(get_tower_height(2022))
+print(get_tower_height(1_000_000_000_000))
