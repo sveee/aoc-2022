@@ -20,29 +20,25 @@ def get_neighbours(node, opened_valves):
 
 
 def find_most_pressure(node, remaining_time, opened_valves):
-
     state = (node, remaining_time, tuple(sorted(opened_valves)))
-
     if state in cache:
         return cache[state]
-
     if remaining_time == 0:
         return 0
-
-    result = 0
+    most_pressure = 0
     for next_node in get_neighbours(node, opened_valves):
         remove = {node} if next_node == node else set()
         remaining_pressure = (
             pressure[node] * (remaining_time - 1) if next_node == node else 0
         )
-        result = max(
-            result,
+        most_pressure = max(
+            most_pressure,
             find_most_pressure(next_node, remaining_time - 1, opened_valves - remove)
             + remaining_pressure,
         )
 
-    cache[state] = result
-    return result
+    cache[state] = most_pressure
+    return most_pressure
 
 
 pressure = {}
