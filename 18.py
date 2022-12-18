@@ -1,6 +1,6 @@
 from utils import get_input
 
-text = get_input(day=18, year=2022)
+text = get_input(day=18, year=2022, test=False)
 
 directions = [
     (1, 0, 0),
@@ -16,7 +16,7 @@ def get_neighbours(position):
     return [
         tuple((position[k] + direction[k] for k in range(3)))
         for direction in directions
-        if all(-2 <= position[k] + direction[k] <= 21 for k in range(3))
+        if all(min_pos <= position[k] + direction[k] <= max_pos for k in range(3))
     ]
 
 
@@ -34,17 +34,18 @@ def find_air(position):
 
 
 droplet = set()
+min_pos, max_pos = 10**10, 0
 for line in text.splitlines():
+    point = tuple(map(int, line.split(',')))
+    max_pos = max(max_pos, max(point) + 1)
+    min_pos = min(min_pos, min(point) - 1)
     droplet.add(tuple(map(int, line.split(','))))
+air = find_air((min_pos, min_pos, min_pos))
 
-
-air = find_air((20, 20, 20))
-surface_area1 = 0
-surface_area2 = 0
+area1, area2 = 0, 0
 for posiiton in droplet:
     for neighbour in get_neighbours(posiiton):
-        surface_area1 += neighbour not in droplet
-        surface_area2 += neighbour in air
-
-print(surface_area1)
-print(surface_area2)
+        area1 += neighbour not in droplet
+        area2 += neighbour in air
+print(area1)
+print(area2)
