@@ -68,32 +68,33 @@ def print_list(start):
     print(sequence)
 
 
-start = end = Node(
-    0,
-    sequence[0],
-)
-end.left = end.right = end
-ordered_nodes = [start]
-n = len(sequence)
+def find_groove_sum(n_rounds, key):
+    start = end = None
+    ordered_nodes = []
+    n = len(sequence)
+    for index, value in enumerate(sequence):
+        node = Node(index, value * key)
+        if start is None:
+            start = node
+            start.left = start.right = start
+        else:
+            add(end, node)
+        end = node
+        ordered_nodes.append(node)
 
-for index, value in enumerate(sequence[1:], start=1):
-    node = Node(index, value)
-    add(end, node)
-    end = node
-    ordered_nodes.append(node)
+    for _round in range(n_rounds):
+        for node in ordered_nodes:
+            left = remove(node)
+            left = move(left, node.value, n - 1)
+            add(left, node)
+
+    zero_node = find(0, start)
+    return (
+        move(zero_node, 1000, n).value
+        + move(zero_node, 2000, n).value
+        + move(zero_node, 3000, n).value
+    )
 
 
-for node in ordered_nodes:
-    left = remove(node)
-    left = move(left, node.value, n - 1)
-    add(left, node)
-    # print_list(start)
-    # break
-
-zero_node = find(0, start)
-
-print(
-    move(zero_node, 1000, n).value
-    + move(zero_node, 2000, n).value
-    + move(zero_node, 3000, n).value
-)
+print(find_groove_sum(1, 1))
+print(find_groove_sum(10, 811589153))
