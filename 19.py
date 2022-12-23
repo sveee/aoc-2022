@@ -130,7 +130,7 @@ max_geodes1 = calculate_max_geodes(blueprints, 24, {})
 print(
     sum(
         blueprint_index * n_geodes
-        for blueprint_index, n_geodes in enumerate(zip(max_geodes1), start=1)
+        for blueprint_index, n_geodes in enumerate(max_geodes1, start=1)
     )
 )
 max_geodes2 = calculate_max_geodes(blueprints[:3], 32, {4, 3})
