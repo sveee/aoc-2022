@@ -28,7 +28,7 @@ class Node:
         elif self.operation == '*':
             return self.left.compute() * self.right.compute()
         elif self.operation == '/':
-            return self.left.compute() // self.right.compute()
+            return self.left.compute() / self.right.compute()
 
     def compute(self):
         if self.value is None:
@@ -68,15 +68,16 @@ def sign(v):
 
 def binary_search(left, right):
     right_sign = sign(root_children_difference(right))
-    while left + 1 < right:
+    while left <= right:
         mid = (left + right) // 2
         value = root_children_difference(mid)
-        if value == 0 or sign(value) == right_sign:
-            right = mid
+        if value == 0:
+            return mid
+        elif sign(value) == right_sign:
+            right = mid - 1
         else:
-            left = mid
-    return right
+            left = mid + 1
 
 
-print(construct_compute_graph()['root'].compute())
-print(binary_search(1, 10**20))
+print(int(construct_compute_graph()['root'].compute()))
+print(binary_search(1, 10**18))
