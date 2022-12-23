@@ -1,36 +1,20 @@
 import re
 from collections import defaultdict
 from copy import copy
+from dataclasses import dataclass
+from functools import reduce
+from typing import List, Set
 
 from tqdm import tqdm
 
 from utils import get_input
 
-text = get_input(day=19, year=2022, test=False)
-# text = '''Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
-# Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.'''
-# print(text)
-
-
-def subtract(left, right):
-    return tuple(left[i] - right[i] for i in range(len(left)))
-
-
-def add(left, right):
-    return tuple(left[i] + right[i] for i in range(len(left)))
-
-
-def multiply(left, right):
-    return tuple(left * right[i] for i in range(len(right)))
-
-
-def quotient(left, right):
-    return min(left[i] // right[i] for i in range(len(left)) if right[i] > 0)
+text = get_input(day=19, year=2022)
 
 
 def construct_blueprint(line):
     (
-        blueprint_id,
+        _blueprint_id,
         ore_for_ore,
         clay_for_ore,
         obsidian_for_ore,
@@ -47,7 +31,8 @@ def construct_blueprint(line):
             line,
         ).groups(),
     )
-    return blueprint_id, [
+    return [
+        (0, 0, 0, 0),
         (ore_for_ore, 0, 0, 0),
         (clay_for_ore, 0, 0, 0),
         (obsidian_for_ore, obsidian_for_clay, 0, 0),
@@ -55,104 +40,98 @@ def construct_blueprint(line):
     ]
 
 
-def find_max_geodes(time, resources, robots, robot_costs, max_robots, cache):
+def subtract(left, right):
+    return tuple(left[i] - right[i] for i in range(len(left)))
+
+
+def add(left, right):
+    return tuple(left[i] + right[i] for i in range(len(left)))
+
+
+def multiply(left, right):
+    return tuple(left * right[i] for i in range(len(right)))
+
+
+def can_buy(left, right):
+    return all(left[i] >= right[i] for i in range(len(left)))
+
+
+@dataclass
+class SearchParameters:
+    robot_costs: List[int]
+    max_time: List[int]
+    max_robots: List[int]
+    greedy_nodes: Set[int]
+
+
+def find_max_geodes(time, resources, robots, parameters, cache):
 
     state = (time, resources, robots)
     if state in cache:
         return cache[state]
 
-    # if time in best_geodes and resources[-1] < best_geodes[time]:
-    #     return 0
-
-    if time == MAX_TIME + 1:
+    if time == parameters.max_time + 1:
         return resources[-1]
 
     new_resources = copy(resources)
     for robot_index, n_robots_per_resource in enumerate(robots):
         new_resources = add(
-            new_resources, multiply(n_robots_per_resource, eye[robot_index])
+            new_resources,
+            multiply(n_robots_per_resource, robot_increments[robot_index + 1]),
         )
 
-    
     max_geodes = 0
-    for robot_index in [3, 2, 1, 0]:
-        if max_robots[robot_index] < robots[robot_index]:
+    for robot_index in reversed(range(5)):
+        if (
+            robot_index > 0
+            and parameters.max_robots[robot_index - 1] == robots[robot_index - 1]
+        ):
             continue
-        robot_cost = robot_costs[robot_index]
-        max_n_can_buy = quotient(resources, robot_cost)
-        if max_n_can_buy > 0:
+        robot_cost = parameters.robot_costs[robot_index]
+        if can_buy(resources, robot_cost) > 0:
             max_geodes = max(
                 max_geodes,
                 find_max_geodes(
                     time + 1,
                     subtract(new_resources, robot_cost),
-                    add(robots, eye[robot_index]),
-                    robot_costs,
-                    max_robots,
+                    add(robots, robot_increments[robot_index]),
+                    parameters,
                     cache,
                 ),
             )
-
-    max_geodes = max(
-        max_geodes,
-        find_max_geodes(
-            time + 1,
-            new_resources,
-            robots,
-            robot_costs,
-            max_robots,
-            cache,
-        ),
-    )
+            if robot_index in parameters.greedy_nodes:
+                break
     cache[state] = max_geodes
     return max_geodes
 
 
-MAX_TIME = 24
-eye = [tuple(1 if i == j else 0 for j in range(4)) for i in range(4)]
-blueprints = {}
-for line in text.splitlines():
-    blueprint_id, robot_costs = construct_blueprint(line)
-    blueprints[blueprint_id] = robot_costs
+robot_increments = [[0] * 4] + [
+    tuple(1 if i == j else 0 for j in range(4)) for i in range(4)
+]
+blueprints = [construct_blueprint(line) for line in text.splitlines()]
 
 
-# print(blueprints[1])
-
-# cache = defaultdict(int)
-# 25 (6, 41, 8, 9) (1, 4, 2, 2)
-# print(find_max_n_geodes(24, (5, 37, 6, 7), (1, 4, 2, 2), blueprints[1], {}, {}))
-# print(find_max_n_geodes(23, (4, 33, 4, 5), (1, 4, 2, 2), blueprints[1], {}, {}))
-# print(find_max_n_geodes(22, (3, 29, 2, 3), (1, 4, 2, 2), blueprints[1], {}, {}))
-# print(find_max_n_geodes(21, (4, 25, 7, 2), (1, 4, 2, 1), blueprints[1], {}, {}))
-# print(find_max_n_geodes(20, (3, 21, 5, 1), (1, 4, 2, 1), blueprints[1], {}, {}))
-# print(find_max_n_geodes(19, (2, 17, 3, 0), (1, 4, 2, 1), blueprints[1], {}, {}))
-# print(find_max_n_geodes(18, (3, 13, 8, 0), (1, 4, 2, 0), blueprints[1], {}, {}))
-# print(find_max_n_geodes(17, (2, 9, 6, 0), (1, 4, 2, 0), blueprints[1], {}, {}))
-# print(find_max_n_geodes(16, (1, 5, 4, 0), (1, 4, 2, 0), blueprints[1], {}, {}))
-# print(find_max_n_geodes(13, (1, 7, 1, 0), (1, 4, 1, 0), blueprints[1], {}, {}))
-# print(find_max_n_geodes(10, (3, 12, 0, 0), (1, 3, 0, 0), blueprints[1], {}, {}))
+def calculate_max_geodes(blueprints, max_time, greedy_nodes):
+    max_geodes = []
+    for blueprint in tqdm(blueprints):
+        max_robots = list(map(max, zip(*blueprint)))
+        max_robots[-1] = 10**10
+        search_parameters = SearchParameters(
+            blueprint, max_time, max_robots, greedy_nodes
+        )
+        max_geodes.append(
+            find_max_geodes(1, (0, 0, 0, 0), (1, 0, 0, 0), search_parameters, {})
+        )
+        print(max_geodes)
+    return max_geodes
 
 
-quality_level = 0
-for blueprint_index, blueprint in tqdm(blueprints.items()):
-    max_robots = list(map(max, zip(*blueprint)))
-    max_robots[-1] = MAX_TIME
-    print(max_robots)
-    max_n_geodes = find_max_geodes(
-        1, (0, 0, 0, 0), (1, 0, 0, 0), blueprint, max_robots, {}
+max_geodes1 = calculate_max_geodes(blueprints, 24, {})
+print(
+    sum(
+        blueprint_index * n_geodes
+        for blueprint_index, n_geodes in enumerate(zip(max_geodes1), start=1)
     )
-    print(blueprint_index, max_n_geodes)
-    quality_level += blueprint_index * max_n_geodes
-print(quality_level)
-
-# print(max_robots)
-
-# (3, 5, 5, 3) 1357
-# (4, 6, 6, 4) 1426
-
-
-# print(
-#     find_max_n_geodes(1, (0, 0, 0, 0), (1, 0, 0, 0), blueprints[21], (5, 7, 7, 5), {})
-# )
-
-# print(find_max_n_geodes(1, (0, 0, 0, 0), (1, 0, 0, 0), blueprints[1], (5, 6, 6, 4), {}))
+)
+max_geodes2 = calculate_max_geodes(blueprints[:3], 32, {4, 3})
+print(reduce(lambda x, y: x * y, max_geodes2))
