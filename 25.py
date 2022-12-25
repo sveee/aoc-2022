@@ -22,7 +22,7 @@ def snafu_to_decimal(s):
     return result
 
 
-def decimal_to_five(n):
+def decimal_to_snafu(n):
     digits = []
     carry = 0
     while n != 0:
@@ -40,4 +40,4 @@ def decimal_to_five(n):
     return ''.join(digits[::-1])
 
 
-print(decimal_to_five(sum(snafu_to_decimal(line) for line in text.splitlines())))
+print(decimal_to_snafu(sum(snafu_to_decimal(line) for line in text.splitlines())))
